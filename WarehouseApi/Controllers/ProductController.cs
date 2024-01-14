@@ -6,7 +6,7 @@ using System.IO;
 
 namespace LearnAPI.Controllers
 {
-    [Route("api/Products")]
+    [Route("api/[controller]")]
     [ApiController]
     public class ProductController : ControllerBase
     {
