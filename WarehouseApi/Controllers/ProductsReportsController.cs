@@ -86,7 +86,8 @@ namespace WarehouseApi.Controllers
                         from exported in exportedGroup.DefaultIfEmpty()
                         join imported in _context.Importeds on product.Id equals imported.ProductId into importedGroup
                         from imported in importedGroup.DefaultIfEmpty()
-                        where exported != null && imported != null && exported.Date.Year == DateTime.Now.Year - 1 && exported.Date.Month == 12
+                        where exported != null && imported != null && exported.Date.Year == DateTime.Now.Year && exported.Date.Month == DateTime.Now.Month -1 
+                        || exported.Date.Year == DateTime.Now.Year - 1 && exported.Date.Month == 12
                         group new { exported, imported } by new { product.Id, product.ProductName } into grouped
                         select new ProductSum
                         {
