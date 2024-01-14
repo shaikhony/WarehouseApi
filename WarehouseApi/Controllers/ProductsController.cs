@@ -14,12 +14,10 @@ namespace WarehouseApi.Controllers
     public class ProductsController : ControllerBase
     {
         private readonly IProductService _productService;
-        private readonly ApplicationDbContext _context;
 
-        public ProductsController(IProductService productService, ApplicationDbContext context)
+        public ProductsController(IProductService productService)
         {
             _productService = productService;
-            _context = context;
         }
         [HttpGet]
         public async Task<IActionResult> GetAllAsync()
@@ -34,90 +32,6 @@ namespace WarehouseApi.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        [HttpGet("EffectiveProducts")]
-        public async Task<IActionResult> EffectiveProducts()
-        {
-            try
-            {
-                var products = await _productService.GetEffectiveProducts();
-                return Ok(products);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-        [HttpGet("MinimumProducts")]
-        public async Task<IActionResult> MinimumProducts()
-        {
-            try
-            {
-                var products = await _productService.GetMinimumProducts();
-                return Ok(products);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-        [HttpGet("Top 10")]
-        public IActionResult Tpo10()
-        {
-            var query = from m in _context.Products
-                        join e in _context.Exporteds on m.Id equals e.ProductId into mj
-                        from sube in mj.DefaultIfEmpty()
-                        orderby sube.Quantity descending
-                        select new
-                        {
-                            ProductName = m.ProductName,
-                            Quantity = sube.Quantity
-                        };
-
-            var result = query.Take(10).ToList();
-            return Ok(result);
-        }
-        [HttpGet("GetProductSummary")]
-        public async Task<IEnumerable<ProductSum>> GetProductSummary()
-        {
-            var query = from product in _context.Products
-                        join exported in _context.Exporteds on product.Id equals exported.ProductId into exportedGroup
-                        from exported in exportedGroup.DefaultIfEmpty()
-                        join imported in _context.Importeds on product.Id equals imported.ProductId into importedGroup
-                        from imported in importedGroup.DefaultIfEmpty()
-                        group new { exported, imported } by new { product.Id, product.ProductName } into grouped
-                        select new ProductSum
-                        {
-                            Id = grouped.Key.Id,
-                            ProductName = grouped.Key.ProductName,
-                            TotalExported = grouped.Sum(x => x.exported.Quantity),
-                            TotalImported = grouped.Sum(x => x.imported.Quantity),
-                            TotalOverall = grouped.Sum(x => x.exported.Quantity + x.imported.Quantity)
-                        };
-
-            return await query.ToListAsync();
-        }
-        [HttpGet("GetProductsSummaryLastMonth")]
-    public async Task<IEnumerable<ProductSum>> GetProductsSummaryLastMonth()
-    {
-            var query = from product in _context.Products
-                        join exported in _context.Exporteds on product.Id equals exported.ProductId into exportedGroup
-                        from exported in exportedGroup.DefaultIfEmpty()
-                        join imported in _context.Importeds on product.Id equals imported.ProductId into importedGroup
-                        from imported in importedGroup.DefaultIfEmpty()
-                        where exported != null && imported != null && exported.Date.Year == DateTime.Now.Year && exported.Date.Month == DateTime.Now.Month -1
-                        group new { exported, imported } by new { product.Id, product.ProductName } into grouped
-                        select new ProductSum
-                        {
-                            Id = grouped.Key.Id,
-                            ProductName = grouped.Key.ProductName,
-                            TotalExported = grouped.Sum(x => x.exported.Quantity),
-                            TotalImported = grouped.Sum(x => x.imported.Quantity),
-                            TotalOverall = grouped.Sum(x => x.exported.Quantity + x.imported.Quantity)
-                        };
-
-            return await query.ToListAsync();
-        }
-
         [HttpPost]
         public async Task<IActionResult> CreateAsync(ProductDto dto)
         {
